@@ -390,22 +390,51 @@
     padding:14px 24px;display:flex;justify-content:flex-end;gap:10px;z-index:2;
   }
   .report-body{max-width:820px;margin:0 auto;padding:36px;color:var(--text);}
-  .report-body h1{font-size:26px;margin:0 0 4px;}
-  .report-body .report-sub{color:var(--muted);font-size:14px;margin-bottom:26px;}
-  .report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:30px;}
+  .report-header-bar{height:7px;border-radius:99px;margin-bottom:22px;background:linear-gradient(120deg,#5b5bf6 0%,#7c5cf6 55%,#a855f7 100%);}
+  .report-body h1{font-size:27px;margin:0 0 4px;font-family:'Lexend',sans-serif;letter-spacing:-.01em;}
+  .report-body .report-sub{color:var(--muted);font-size:14px;margin-bottom:28px;}
+  .report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:32px;}
   .report-summary .stat{background:var(--bg);}
-  .report-section{margin-bottom:28px;}
-  .report-section h2{font-size:16px;margin:0 0 10px;border-bottom:2px solid var(--border);padding-bottom:8px;}
+  .report-section{margin-bottom:30px;page-break-inside:avoid;}
+  .report-section h2{
+    font-size:16px;margin:0 0 14px;padding-bottom:9px;font-family:'Lexend',sans-serif;
+    border-bottom:2.5px solid var(--primary);color:var(--text);
+  }
+  .report-section h3{
+    font-size:12px;margin:18px 0 8px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;
+  }
+  .report-section h3:first-of-type{margin-top:4px;}
   .report-table{width:100%;border-collapse:collapse;font-size:13px;}
-  .report-table th, .report-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border-soft);}
+  .report-table th, .report-table td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--border-soft);}
+  .report-table tbody tr:nth-child(even){background:var(--bg);}
   .report-table th{color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;}
-  .report-empty{color:var(--muted);font-size:13px;font-style:italic;}
+  .report-empty{color:var(--muted);font-size:13px;font-style:italic;padding:6px 0;}
+
+  .subject-bars{display:flex;flex-direction:column;gap:11px;}
+  .subject-bar-row{display:flex;align-items:center;gap:12px;}
+  .subject-bar-label{width:150px;font-size:13px;font-weight:600;flex-shrink:0;}
+  .subject-bar-track{flex:1;background:var(--bg);border-radius:99px;height:14px;overflow:hidden;}
+  .subject-bar-fill{display:block;height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:99px;}
+  .subject-bar-time{width:80px;text-align:right;font-size:12.5px;font-weight:700;color:var(--muted);flex-shrink:0;}
+
+  .pending-list{list-style:none;padding:0;margin:0;}
+  .pending-list li{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:8px 0;border-bottom:1px dashed var(--border-soft);font-size:13px;
+  }
+  .pending-list li:last-child{border-bottom:none;}
+  .pending-due{font-size:11px;font-weight:700;padding:3px 9px;border-radius:99px;white-space:nowrap;}
+  .pending-due.overdue{background:var(--red-light);color:var(--red);}
+  .pending-due.soon{background:var(--amber-light);color:var(--amber);}
+  .pending-due.normal{background:var(--bg);color:var(--muted);}
 
   @media print{
     body > *:not(.report-overlay){display:none !important;}
     .report-overlay{position:static !important;}
     .no-print{display:none !important;}
     .report-body{padding:0;max-width:none;}
+    .report-summary .stat, .report-table tbody tr:nth-child(even){background:#f4f4f8 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .subject-bar-fill, .report-header-bar{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   }
 </style>
 </head>
@@ -1155,38 +1184,96 @@ function getRangeFor(rangeType){
   }
 }
 
+function pendingDueBadge(a){
+  if(!a.dueDate) return '';
+  const diff = daysBetween(todayISO(), a.dueDate);
+  let cls='normal', label;
+  if(diff<0){ cls='overdue'; label=`Overdue ${Math.abs(diff)}d`; }
+  else if(diff===0){ cls='soon'; label='Due today'; }
+  else if(diff<=3){ cls='soon'; label=diff===1?'Due tomorrow':`Due in ${diff}d`; }
+  else { label=`Due in ${diff}d`; }
+  return `<span class="pending-due ${cls}">${label}</span>`;
+}
+
 function buildReportHTML(range){
   const { from, to, label } = range;
-  let totalSeconds = 0, totalUploads = 0, totalCompleted = 0;
+  let totalSeconds = 0, totalUploads = 0, totalCompleted = 0, totalPending = 0;
+
+  const uploadsInRange = [];
+  data.assignments.forEach(a=>{
+    const cls = data.classes.find(c=>c.id===a.classId);
+    a.uploads.forEach(d=>{
+      if(d>=from && d<=to) uploadsInRange.push({ date: d, className: cls?.name||'—', assignmentName: a.name });
+    });
+  });
+  uploadsInRange.sort((x,y)=> y.date.localeCompare(x.date));
+  totalUploads = uploadsInRange.length;
+
+  const classTimes = data.classes.map(cls=>{
+    const secs = data.assignments.filter(a=>a.classId===cls.id).reduce((s,a)=>s+getAssignmentSeconds(a, from, to), 0);
+    return { name: cls.name, secs };
+  }).filter(c=>c.secs>0).sort((a,b)=>b.secs-a.secs);
+  const maxClassSecs = Math.max(1, ...classTimes.map(c=>c.secs));
+  totalSeconds = classTimes.reduce((s,c)=>s+c.secs, 0);
+
+  const subjectBars = classTimes.length ? `
+    <div class="report-section">
+      <h2>Time by subject</h2>
+      <div class="subject-bars">
+        ${classTimes.map(c=>`
+          <div class="subject-bar-row">
+            <span class="subject-bar-label">${escapeHtml(c.name)}</span>
+            <span class="subject-bar-track"><span class="subject-bar-fill" style="width:${Math.round(c.secs/maxClassSecs*100)}%"></span></span>
+            <span class="subject-bar-time">${formatDuration(c.secs)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  const uploadsSection = `
+    <div class="report-section">
+      <h2>Dropbox uploads (${uploadsInRange.length})</h2>
+      ${uploadsInRange.length ? `
+      <table class="report-table">
+        <thead><tr><th>Date</th><th>Subject</th><th>Assignment</th></tr></thead>
+        <tbody>
+          ${uploadsInRange.map(u=>`<tr><td>${u.date}</td><td>${escapeHtml(u.className)}</td><td>${escapeHtml(u.assignmentName)}</td></tr>`).join('')}
+        </tbody>
+      </table>` : `<div class="report-empty">No uploads logged in this period.</div>`}
+    </div>`;
 
   const classSections = data.classes.map(cls=>{
     const classAssignments = data.assignments.filter(a=>a.classId===cls.id);
-    const classSeconds = classAssignments.reduce((s,a)=>s+getAssignmentSeconds(a, from, to), 0);
-    const classUploads = classAssignments.reduce((s,a)=>s+a.uploads.filter(d=>d>=from && d<=to).length, 0);
     const classCompleted = classAssignments.filter(a=>a.done && a.completedDate && a.completedDate>=from && a.completedDate<=to);
-
-    totalSeconds += classSeconds;
-    totalUploads += classUploads;
     totalCompleted += classCompleted.length;
 
-    const rows = classAssignments
+    const workedRows = classAssignments
       .map(a=>({ a, secs: getAssignmentSeconds(a, from, to) }))
       .filter(({a,secs}) => secs>0 || (a.done && a.completedDate>=from && a.completedDate<=to))
       .sort((x,y)=>y.secs-x.secs);
 
-    if(classSeconds===0 && classCompleted.length===0 && classUploads===0) return '';
+    const pending = classAssignments.filter(a=>!a.done).sort((a,b)=>{
+      if(a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      if(a.dueDate) return -1;
+      if(b.dueDate) return 1;
+      return a.name.localeCompare(b.name);
+    });
+    totalPending += pending.length;
+
+    if(workedRows.length===0 && pending.length===0) return '';
 
     return `
       <div class="report-section">
-        <h2>${escapeHtml(cls.name)} — ${formatDuration(classSeconds)}${classUploads?` · ${classUploads} upload${classUploads===1?'':'s'}`:''}</h2>
-        ${rows.length ? `
+        <h2>${escapeHtml(cls.name)}</h2>
+        <h3>Worked on this period</h3>
+        ${workedRows.length ? `
         <table class="report-table">
           <thead><tr><th>Assignment</th><th>Type</th><th>Time</th><th>Status</th><th>Score</th></tr></thead>
           <tbody>
-            ${rows.map(({a,secs})=>`
+            ${workedRows.map(({a,secs})=>`
               <tr>
                 <td>${escapeHtml(a.name)}</td>
-                <td>${a.types.join(', ')}</td>
+                <td>${a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join(' ')}</td>
                 <td>${secs>0 ? formatDuration(secs) : '—'}</td>
                 <td>${a.done && a.completedDate>=from && a.completedDate<=to ? `Completed ${a.completedDate}` : (a.done ? 'Completed earlier' : 'In progress')}</td>
                 <td>${escapeHtml(a.score || '—')}</td>
@@ -1194,19 +1281,34 @@ function buildReportHTML(range){
             `).join('')}
           </tbody>
         </table>` : `<div class="report-empty">No activity logged in this class for this period.</div>`}
+
+        <h3>Pending work (${pending.length})</h3>
+        ${pending.length ? `
+        <ul class="pending-list">
+          ${pending.map(a=>`
+            <li>
+              <span>${escapeHtml(a.name)} ${a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join(' ')}</span>
+              ${pendingDueBadge(a)}
+            </li>
+          `).join('')}
+        </ul>` : `<div class="report-empty">Nothing pending — all caught up in this subject.</div>`}
       </div>
     `;
   }).filter(Boolean).join('');
 
   return `
+    <div class="report-header-bar"></div>
     <h1>📚 School Tracker Report</h1>
     <div class="report-sub">${label} · generated ${formatDateNice(new Date())}</div>
     <div class="report-summary">
       <div class="stat"><div class="num">${formatDuration(totalSeconds)}</div><div class="label">Total time worked</div></div>
       <div class="stat"><div class="num">${totalCompleted}</div><div class="label">Assignments completed</div></div>
       <div class="stat"><div class="num">${totalUploads}</div><div class="label">Dropbox uploads</div></div>
+      <div class="stat"><div class="num">${totalPending}</div><div class="label">Assignments pending</div></div>
     </div>
-    ${classSections || '<div class="report-empty">No activity logged for this period.</div>'}
+    ${subjectBars}
+    ${uploadsSection}
+    ${classSections || '<div class="report-empty">No classes to report on.</div>'}
   `;
 }
 
@@ -1218,6 +1320,11 @@ function openReport(rangeType){
 
 function closeReport(){
   document.getElementById('reportOverlay').classList.remove('open');
+}
+
+// Read-only snapshot for the browser extension (chrome.scripting world:'MAIN' calls this).
+function getTrackerState(){
+  return { classes: data.classes, assignments: data.assignments };
 }
 
 render();
