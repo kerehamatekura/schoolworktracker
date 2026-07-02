@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>School Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lexend:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#eef1f8;
+    --bg-grad-a:#eef2fb;
+    --bg-grad-b:#f7eefb;
+    --card:#ffffff;
+    --border:#e6e9f2;
+    --border-soft:#eef0f7;
+    --text:#1e2333;
+    --muted:#7b8299;
+    --primary:#5b5bf6;
+    --primary-light:#eeeeff;
+    --primary-dark:#4341d6;
+    --accent:#ec4899;
+    --green:#16a34a;
+    --green-light:#e9f9ef;
+    --amber:#d97706;
+    --amber-light:#fef6e7;
+    --red:#dc2626;
+    --red-light:#fdecec;
+    --journal:#0ea5e9;
+    --journal-light:#e6f6fd;
+    --module:#8b5cf6;
+    --module-light:#f2edfe;
+    --dropbox:#f59e0b;
+    --dropbox-light:#fef3e2;
+    --radius:16px;
+    --radius-sm:10px;
+    --shadow-sm:0 1px 2px rgba(30,35,51,.05), 0 1px 1px rgba(30,35,51,.03);
+    --shadow-md:0 8px 24px -8px rgba(60,66,110,.16), 0 2px 6px rgba(60,66,110,.06);
+    --shadow-lg:0 20px 40px -14px rgba(60,66,110,.28);
+  }
+  *{box-sizing:border-box;}
+  ::selection{background:var(--primary);color:#fff;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1100px 500px at 8% -10%, var(--bg-grad-a), transparent),
+      radial-gradient(900px 500px at 100% 0%, var(--bg-grad-b), transparent),
+      var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Lexend','Inter',sans-serif;}
+
+  header{
+    background:linear-gradient(120deg,#5b5bf6 0%,#7c5cf6 55%,#a855f7 100%);
+    color:#fff;
+    padding:22px 28px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:14px;
+    box-shadow:0 4px 24px -6px rgba(91,91,246,.45);
+    position:sticky;
+    top:0;
+    z-index:10;
+  }
+  header h1{
+    margin:0;
+    font-size:21px;
+    font-weight:700;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    letter-spacing:-.01em;
+  }
+  header h1 .logo{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border-radius:11px;
+    background:rgba(255,255,255,.18);
+    font-size:19px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .upload-badge{
+    background:rgba(255,255,255,.16);
+    backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.25);
+    border-radius:999px;
+    padding:9px 18px 9px 14px;
+    font-size:13.5px;
+    font-weight:600;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    box-shadow:var(--shadow-sm);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block;box-shadow:0 0 0 3px rgba(255,255,255,.18);}
+  .dot.green{background:#4ade80;}
+  .dot.amber{background:#fbbf24;}
+  .dot.red{background:#fb7185;}
+
+  .layout{
+    display:grid;
+    grid-template-columns:250px 1fr;
+    gap:22px;
+    padding:24px;
+    max-width:1200px;
+    margin:0 auto;
+  }
+  @media (max-width:800px){
+    .layout{grid-template-columns:1fr;padding:16px;}
+  }
+  .panel{
+    background:var(--card);
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius);
+    padding:18px;
+    box-shadow:var(--shadow-sm);
+  }
+  .sidebar{
+    align-self:start;
+    position:sticky;
+    top:100px;
+  }
+  @media (max-width:800px){ .sidebar{position:static;} }
+  .sidebar h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:2px 0 12px;font-weight:700;}
+  .class-list{list-style:none;padding:0;margin:0 0 14px;}
+  .class-list li{
+    padding:11px 12px;
+    border-radius:var(--radius-sm);
+    cursor:pointer;
+    margin-bottom:3px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:14px;
+    font-weight:500;
+    transition:background .15s ease, color .15s ease, transform .1s ease;
+  }
+  .class-list li:hover{background:var(--primary-light);}
+  .class-list li:active{transform:scale(.98);}
+  .class-list li.active{background:var(--primary);color:#fff;box-shadow:0 6px 14px -4px rgba(91,91,246,.55);}
+  .class-list li.active .count{color:#fff;background:rgba(255,255,255,.22);}
+  .class-list li.no-work{opacity:.75;}
+  .class-list li .count{
+    font-size:11.5px;font-weight:700;color:var(--muted);
+    background:var(--bg);padding:2px 8px;border-radius:99px;
+  }
+  .class-list li .no-work-tag{
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;
+    color:var(--amber);background:var(--amber-light);padding:3px 8px;border-radius:99px;
+  }
+  .class-list li.active .no-work-tag{background:rgba(255,255,255,.22);color:#fff;}
+  .class-list li .del-btn{
+    opacity:0;font-size:12px;background:none;border:none;color:inherit;cursor:pointer;
+    padding:3px 6px;border-radius:6px;line-height:1;
+  }
+  .class-list li:hover .del-btn{opacity:0.55;}
+  .class-list li .del-btn:hover{opacity:1 !important;background:rgba(0,0,0,.08);}
+  .class-list li.active .del-btn:hover{background:rgba(255,255,255,.2);}
+  .no-work-banner{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    background:var(--amber-light);border:1px solid #fbdfa2;color:#92400e;
+    border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:18px;font-size:14px;font-weight:500;
+  }
+  .no-work-banner button{
+    background:#fff;border:1px solid #f0c876;color:#92400e;border-radius:7px;
+    padding:5px 12px;font-size:12px;font-weight:600;
+  }
+  .no-work-banner button:hover{background:#fffaf0;}
+
+  input[type=text], select{
+    width:100%;
+    padding:9px 12px;
+    border:1.5px solid var(--border);
+    border-radius:var(--radius-sm);
+    font-size:14px;
+    margin-bottom:8px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fff;
+    transition:border-color .15s ease, box-shadow .15s ease;
+  }
+  input[type=text]:focus, select:focus{
+    outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light);
+  }
+  input[type=text]::placeholder{color:#a7adc0;}
+  button{
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .btn{
+    background:var(--primary);
+    color:#fff;
+    border:none;
+    padding:9px 16px;
+    border-radius:var(--radius-sm);
+    font-size:14px;
+    font-weight:600;
+    box-shadow:0 4px 10px -3px rgba(91,91,246,.55);
+    transition:background .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  .btn:hover{background:var(--primary-dark);box-shadow:0 6px 14px -3px rgba(91,91,246,.6);}
+  .btn:active{transform:translateY(1px);}
+  .btn.small{padding:6px 12px;font-size:12.5px;box-shadow:none;}
+  .btn.secondary{background:#fff;color:var(--text);border:1.5px solid var(--border);box-shadow:none;}
+  .btn.secondary:hover{background:var(--bg);border-color:#d7dbe8;}
+
+  .main h2{margin-top:0;font-size:19px;font-weight:700;letter-spacing:-.01em;}
+  .dashboard{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+    gap:14px;
+    margin-bottom:22px;
+  }
+  .stat{
+    background:linear-gradient(160deg,#fbfbff,var(--bg));
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius-sm);
+    padding:16px;
+    text-align:center;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-md);}
+  .stat .num{font-size:26px;font-weight:800;font-family:'Lexend',sans-serif;letter-spacing:-.02em;}
+  .stat .label{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500;}
+  .progress-bar{
+    height:7px;
+    background:var(--border);
+    border-radius:99px;
+    overflow:hidden;
+    margin-top:10px;
+  }
+  .progress-bar > div{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:99px;transition:width .3s ease;}
+
+  .add-form{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:flex-end;
+    margin-bottom:22px;
+    padding:16px;
+    background:var(--bg);
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius-sm);
+  }
+  .add-form .field{flex:1;min-width:140px;}
+  .add-form label{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);display:block;margin-bottom:5px;}
+  .type-checks{display:flex;gap:8px;flex-wrap:wrap;padding-bottom:8px;}
+  .type-checks label{
+    display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:var(--text);
+    background:#fff;border:1.5px solid var(--border);padding:7px 12px;border-radius:99px;cursor:pointer;
+    transition:border-color .15s ease, background .15s ease;
+  }
+  .type-checks label:has(input:checked){border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark);}
+
+  .assignment{
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius-sm);
+    padding:16px;
+    margin-bottom:10px;
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    background:#fff;
+    transition:box-shadow .15s ease, transform .15s ease, border-color .15s ease;
+  }
+  .assignment:hover{box-shadow:var(--shadow-md);transform:translateY(-1px);border-color:var(--border);}
+  .assignment.done{opacity:0.65;background:var(--green-light);border-color:#dcf3e3;}
+  .assignment.done:hover{transform:none;box-shadow:var(--shadow-sm);}
+  .assignment input[type=checkbox]{
+    width:21px;height:21px;margin-top:2px;flex-shrink:0;accent-color:var(--primary);cursor:pointer;
+  }
+  .assignment-body{flex:1;min-width:0;}
+  .assignment-top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;}
+  .assignment-name{font-weight:600;font-size:15px;}
+  .assignment-name.strike{text-decoration:line-through;color:var(--muted);}
+  .badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+  .badge{
+    font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+    padding:4px 10px;border-radius:99px;
+  }
+  .badge.journal{background:var(--journal-light);color:#0369a1;}
+  .badge.module{background:var(--module-light);color:#6d28d9;}
+  .badge.dropbox{background:var(--dropbox-light);color:#b45309;}
+  .class-tag{font-size:12px;color:var(--muted);font-weight:500;}
+
+  .module-step{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:500;color:var(--muted);}
+  .module-step input{
+    width:76px;padding:5px 8px;margin:0;border:1.5px solid var(--border);border-radius:7px;font-size:13px;
+    font-weight:700;color:var(--module);text-align:center;
+  }
+  .module-step input:focus{border-color:var(--module);box-shadow:0 0 0 3px var(--module-light);}
+  .assignment-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
+  .upload-log{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;}
+  .upload-log a{opacity:.6;}
+  .upload-log a:hover{opacity:1;}
+  .empty{
+    color:var(--muted);font-size:14px;padding:40px 20px;text-align:center;
+    background:var(--bg);border-radius:var(--radius-sm);border:1.5px dashed var(--border);
+  }
+
+  .month-nav{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .month-nav button{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;}
+  .month-nav span{font-weight:600;}
+
+  .view-tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1.5px solid var(--border-soft);}
+  .view-tabs button{
+    background:none;border:none;padding:10px 16px;font-size:14px;font-weight:600;
+    color:var(--muted);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;
+    border-radius:8px 8px 0 0;transition:color .15s ease, background .15s ease;
+  }
+  .view-tabs button:hover{color:var(--text);background:var(--bg);}
+  .view-tabs button.active{color:var(--primary);border-bottom-color:var(--primary);background:none;}
+
+  .history-item{
+    border:1px solid var(--border-soft);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:8px;
+    display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    background:#fff;transition:box-shadow .15s ease;
+  }
+  .history-item:hover{box-shadow:var(--shadow-sm);}
+  .history-item .hist-name{font-weight:600;font-size:14px;}
+  .history-item .hist-date{
+    font-size:12.5px;font-weight:700;color:var(--green);white-space:nowrap;
+    background:var(--green-light);padding:5px 12px;border-radius:99px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1><span class="logo">📚</span> School Tracker</h1>
+  <div class="upload-badge" id="uploadBadge">
+    <span class="dot" id="uploadDot"></span>
+    <span id="uploadText">Loading...</span>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="panel sidebar">
+    <h2>Classes</h2>
+    <ul class="class-list" id="classList"></ul>
+    <input type="text" id="newClassName" placeholder="New class name">
+    <button class="btn" style="width:100%" onclick="addClass()">+ Add class</button>
+  </div>
+
+  <div class="panel main">
+    <div class="dashboard" id="dashboard"></div>
+
+    <h2 id="mainTitle">All classes</h2>
+
+    <div id="noWorkBanner"></div>
+
+    <div class="view-tabs">
+      <button id="tabBoard" class="active" onclick="setView('board')">Assignments</button>
+      <button id="tabHistory" onclick="setView('history')">History</button>
+    </div>
+
+    <div id="boardView">
+      <div class="add-form">
+        <div class="field" style="min-width:180px;">
+          <label>Assignment name</label>
+          <input type="text" id="newAssignName" placeholder="e.g. Chapter 3 Reflection">
+        </div>
+        <div class="field" style="min-width:160px;">
+          <label>Class</label>
+          <select id="newAssignClass"></select>
+        </div>
+        <div class="field" style="flex-basis:100%;">
+          <label>Type (pick one or more)</label>
+          <div class="type-checks">
+            <label><input type="checkbox" value="journal" class="typeCheck"> Journal</label>
+            <label><input type="checkbox" value="module" class="typeCheck"> Module</label>
+            <label><input type="checkbox" value="dropbox" class="typeCheck"> Dropbox</label>
+          </div>
+        </div>
+        <div class="field" style="min-width:100px;flex:0 0 auto;">
+          <button class="btn" onclick="addAssignment()">+ Add assignment</button>
+        </div>
+      </div>
+
+      <div id="assignmentList"></div>
+    </div>
+
+    <div id="historyView" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = 'school-tracker-data-v1';
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { classes: [], assignments: [] };
+}
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+let data = loadData();
+let selectedClassId = null; // null = all classes
+let currentView = 'board'; // 'board' | 'history'
+let viewMonth = new Date().getMonth();
+let viewYear = new Date().getFullYear();
+
+function uid(){
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+}
+
+function todayISO(){
+  return new Date().toISOString().slice(0,10);
+}
+
+// ---------- Classes ----------
+function addClass(){
+  const input = document.getElementById('newClassName');
+  const name = input.value.trim();
+  if(!name) return;
+  data.classes.push({ id: uid(), name, noWorkAssigned: false });
+  input.value = '';
+  saveData();
+  render();
+}
+
+function toggleNoWork(id, evt){
+  if(evt) evt.stopPropagation();
+  const cls = data.classes.find(c=>c.id===id);
+  cls.noWorkAssigned = !cls.noWorkAssigned;
+  saveData();
+  render();
+}
+
+function deleteClass(id, evt){
+  evt.stopPropagation();
+  const cls = data.classes.find(c=>c.id===id);
+  if(!confirm(`Delete "${cls.name}" and all its assignments?`)) return;
+  data.classes = data.classes.filter(c=>c.id!==id);
+  data.assignments = data.assignments.filter(a=>a.classId!==id);
+  if(selectedClassId===id) selectedClassId = null;
+  saveData();
+  render();
+}
+
+function selectClass(id){
+  selectedClassId = id;
+  render();
+}
+
+// ---------- Assignments ----------
+function addAssignment(){
+  const nameInput = document.getElementById('newAssignName');
+  const classSelect = document.getElementById('newAssignClass');
+  const name = nameInput.value.trim();
+  const classId = classSelect.value;
+  const types = Array.from(document.querySelectorAll('.typeCheck:checked')).map(c=>c.value);
+
+  if(!name){ alert('Give the assignment a name.'); return; }
+  if(!classId){ alert('Add a class first.'); return; }
+  if(types.length===0){ alert('Pick at least one type.'); return; }
+
+  data.assignments.push({
+    id: uid(),
+    classId,
+    name,
+    types,
+    moduleStep: types.includes('module') ? '1.1' : '',
+    done: false,
+    completedDate: null,
+    uploads: []
+  });
+
+  nameInput.value = '';
+  document.querySelectorAll('.typeCheck').forEach(c=>c.checked=false);
+  saveData();
+  render();
+}
+
+function deleteAssignment(id){
+  if(!confirm('Delete this assignment?')) return;
+  data.assignments = data.assignments.filter(a=>a.id!==id);
+  saveData();
+  render();
+}
+
+function toggleDone(id){
+  const a = data.assignments.find(x=>x.id===id);
+  a.done = !a.done;
+  a.completedDate = a.done ? todayISO() : null;
+  saveData();
+  render();
+}
+
+function setView(view){
+  currentView = view;
+  render();
+}
+
+function updateModuleStep(id, value){
+  const a = data.assignments.find(x=>x.id===id);
+  a.moduleStep = value;
+  saveData();
+}
+
+function logUpload(id){
+  const a = data.assignments.find(x=>x.id===id);
+  a.uploads.push(todayISO());
+  saveData();
+  render();
+}
+
+function removeUpload(id, idx){
+  const a = data.assignments.find(x=>x.id===id);
+  a.uploads.splice(idx,1);
+  saveData();
+  render();
+}
+
+// ---------- Stats ----------
+function uploadsInMonth(year, month){
+  let count = 0;
+  data.assignments.forEach(a=>{
+    a.uploads.forEach(dateStr=>{
+      const d = new Date(dateStr);
+      if(d.getFullYear()===year && d.getMonth()===month) count++;
+    });
+  });
+  return count;
+}
+
+function updateUploadBadge(){
+  const now = new Date();
+  const count = uploadsInMonth(now.getFullYear(), now.getMonth());
+  const goal = 5;
+  const dot = document.getElementById('uploadDot');
+  const text = document.getElementById('uploadText');
+
+  const daysInMonth = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const daysLeft = daysInMonth - now.getDate();
+  const remaining = Math.max(0, goal - count);
+
+  let cls = 'green';
+  if(count >= goal) cls = 'green';
+  else if(remaining <= daysLeft) cls = 'amber';
+  else cls = 'red';
+
+  dot.className = 'dot ' + cls;
+  text.textContent = `${count}/${goal} dropbox uploads this month`;
+}
+
+// ---------- Rendering ----------
+function render(){
+  renderClassList();
+  renderClassSelect();
+  renderDashboard();
+  renderNoWorkBanner();
+  renderViewTabs();
+  renderAssignments();
+  renderHistory();
+  updateUploadBadge();
+}
+
+function renderViewTabs(){
+  document.getElementById('tabBoard').classList.toggle('active', currentView==='board');
+  document.getElementById('tabHistory').classList.toggle('active', currentView==='history');
+  document.getElementById('boardView').style.display = currentView==='board' ? '' : 'none';
+  document.getElementById('historyView').style.display = currentView==='history' ? '' : 'none';
+}
+
+function renderNoWorkBanner(){
+  const el = document.getElementById('noWorkBanner');
+  if(!selectedClassId){ el.innerHTML=''; return; }
+  const cls = data.classes.find(c=>c.id===selectedClassId);
+  if(!cls || !cls.noWorkAssigned){ el.innerHTML=''; return; }
+  el.innerHTML = `
+    <div class="no-work-banner">
+      <span>📭 No work currently assigned for ${escapeHtml(cls.name)}.</span>
+      <button onclick="toggleNoWork('${cls.id}')">Clear status</button>
+    </div>
+  `;
+}
+
+function renderClassList(){
+  const list = document.getElementById('classList');
+  list.innerHTML = '';
+
+  const allLi = document.createElement('li');
+  allLi.className = selectedClassId===null ? 'active' : '';
+  allLi.onclick = ()=>selectClass(null);
+  allLi.innerHTML = `<span>All classes</span><span class="count">${data.assignments.length}</span>`;
+  list.appendChild(allLi);
+
+  data.classes.forEach(c=>{
+    const count = data.assignments.filter(a=>a.classId===c.id).length;
+    const li = document.createElement('li');
+    li.className = (selectedClassId===c.id ? 'active ' : '') + (c.noWorkAssigned ? 'no-work' : '');
+    li.onclick = ()=>selectClass(c.id);
+    const rightSide = c.noWorkAssigned
+      ? `<span class="no-work-tag">no work</span>`
+      : `<span class="count">${count}</span>`;
+    li.innerHTML = `<span>${escapeHtml(c.name)}</span><span style="display:flex;align-items:center;gap:6px;">${rightSide}<button class="del-btn no-work-btn" title="Toggle: no work assigned">📭</button><button class="del-btn" title="Delete class">✕</button></span>`;
+    li.querySelector('.no-work-btn').onclick = (e)=>toggleNoWork(c.id, e);
+    li.querySelector('.del-btn:last-child').onclick = (e)=>deleteClass(c.id, e);
+    list.appendChild(li);
+  });
+}
+
+function renderClassSelect(){
+  const sel = document.getElementById('newAssignClass');
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Select class...</option>' +
+    data.classes.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  if(selectedClassId) sel.value = selectedClassId;
+  else if(current) sel.value = current;
+}
+
+function renderDashboard(){
+  const dash = document.getElementById('dashboard');
+  const title = document.getElementById('mainTitle');
+
+  const relevant = selectedClassId
+    ? data.assignments.filter(a=>a.classId===selectedClassId)
+    : data.assignments;
+
+  title.textContent = selectedClassId
+    ? (data.classes.find(c=>c.id===selectedClassId)?.name || 'Class')
+    : 'All classes';
+
+  const total = relevant.length;
+  const done = relevant.filter(a=>a.done).length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  const now = new Date();
+  const monthCount = uploadsInMonth(now.getFullYear(), now.getMonth());
+  const monthName = now.toLocaleString('default',{month:'long'});
+
+  dash.innerHTML = `
+    <div class="stat">
+      <div class="num">${done}/${total}</div>
+      <div class="label">Assignments completed</div>
+      <div class="progress-bar"><div style="width:${pct}%"></div></div>
+    </div>
+    <div class="stat">
+      <div class="num">${total-done}</div>
+      <div class="label">Still to do</div>
+    </div>
+    <div class="stat">
+      <div class="num" style="color:${monthCount>=5?'var(--green)':'var(--red)'}">${monthCount}/5</div>
+      <div class="label">Dropbox uploads in ${monthName}</div>
+    </div>
+  `;
+}
+
+function renderAssignments(){
+  const container = document.getElementById('assignmentList');
+  const list = (selectedClassId
+    ? data.assignments.filter(a=>a.classId===selectedClassId)
+    : data.assignments
+  ).slice().sort((a,b)=> (a.done - b.done) || a.name.localeCompare(b.name));
+
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">No assignments yet. Add one above.</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(a=>{
+    const cls = data.classes.find(c=>c.id===a.classId);
+    const badges = a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join('');
+    const moduleStep = a.types.includes('module') ? `
+      <div class="module-step">
+        📘 On step:
+        <input type="text" value="${escapeHtml(a.moduleStep||'')}" onchange="updateModuleStep('${a.id}', this.value)">
+      </div>` : '';
+
+    const uploadList = a.uploads.length ? `
+      <div class="upload-log">Uploaded: ${a.uploads.map((d,i)=>`${d} <a href="#" onclick="event.preventDefault();removeUpload('${a.id}',${i})" style="color:var(--red);text-decoration:none;">✕</a>`).join(', ')}</div>
+    ` : '';
+
+    return `
+      <div class="assignment ${a.done?'done':''}">
+        <input type="checkbox" ${a.done?'checked':''} onchange="toggleDone('${a.id}')">
+        <div class="assignment-body">
+          <div class="assignment-top">
+            <div>
+              <span class="assignment-name ${a.done?'strike':''}">${escapeHtml(a.name)}</span>
+              ${selectedClassId===null ? `<span class="class-tag"> · ${escapeHtml(cls?.name||'')}</span>` : ''}
+            </div>
+          </div>
+          <div class="badges">${badges}</div>
+          ${moduleStep}
+          <div class="assignment-actions">
+            <button class="btn small" onclick="logUpload('${a.id}')">⬆ Log dropbox upload</button>
+            <button class="btn small secondary" onclick="deleteAssignment('${a.id}')">Delete</button>
+          </div>
+          ${uploadList}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderHistory(){
+  const container = document.getElementById('historyView');
+  if(currentView !== 'history') return;
+
+  const list = (selectedClassId
+    ? data.assignments.filter(a=>a.classId===selectedClassId)
+    : data.assignments
+  ).filter(a=>a.done && a.completedDate)
+   .slice()
+   .sort((a,b)=> b.completedDate.localeCompare(a.completedDate));
+
+  if(list.length===0){
+    container.innerHTML = '<div class="empty">Nothing completed yet.</div>';
+    return;
+  }
+
+  container.innerHTML = list.map(a=>{
+    const cls = data.classes.find(c=>c.id===a.classId);
+    const badges = a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join('');
+    return `
+      <div class="history-item">
+        <div>
+          <span class="hist-name">${escapeHtml(a.name)}</span>
+          ${selectedClassId===null ? `<span class="class-tag"> · ${escapeHtml(cls?.name||'')}</span>` : ''}
+          <div class="badges">${badges}</div>
+        </div>
+        <span class="hist-date">✅ ${a.completedDate}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str ?? '';
+  return d.innerHTML;
+}
+
+render();
+</script>
+</body>
+</html>
