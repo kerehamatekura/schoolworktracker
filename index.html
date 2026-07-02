@@ -33,6 +33,8 @@
     --module-light:#f2edfe;
     --dropbox:#f59e0b;
     --dropbox-light:#fef3e2;
+    --quiz:#db2777;
+    --quiz-light:#fdf1f8;
     --radius:16px;
     --radius-sm:10px;
     --shadow-sm:0 1px 2px rgba(30,35,51,.05), 0 1px 1px rgba(30,35,51,.03);
@@ -127,6 +129,9 @@
   }
   @media (max-width:800px){ .sidebar{position:static;} }
   .sidebar h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:2px 0 12px;font-weight:700;}
+  .backup-section{margin-top:18px;padding-top:16px;border-top:1.5px solid var(--border-soft);}
+  .backup-buttons{display:flex;flex-direction:column;gap:8px;}
+  .backup-buttons .btn{width:100%;}
   .class-list{list-style:none;padding:0;margin:0 0 14px;}
   .class-list li{
     padding:11px 12px;
@@ -210,6 +215,17 @@
   .btn.secondary:hover{background:var(--bg);border-color:#d7dbe8;}
 
   .main h2{margin-top:0;font-size:19px;font-weight:700;letter-spacing:-.01em;}
+  .main-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
+  .main-header h2{margin:0;}
+  .worked-btn{
+    background:var(--green-light);color:var(--green);border:1.5px solid #cdeed9;
+    padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;
+    display:flex;align-items:center;gap:7px;box-shadow:none;transition:background .15s ease,border-color .15s ease,transform .1s ease;
+  }
+  .worked-btn:hover{background:#dcf3e3;border-color:#b7e6c6;}
+  .worked-btn:active{transform:scale(.97);}
+  .worked-btn.logged{background:var(--green);color:#fff;border-color:var(--green);}
+  .worked-btn.logged:hover{background:#128a3e;}
   .dashboard{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
@@ -286,7 +302,32 @@
   .badge.journal{background:var(--journal-light);color:#0369a1;}
   .badge.module{background:var(--module-light);color:#6d28d9;}
   .badge.dropbox{background:var(--dropbox-light);color:#b45309;}
+  .badge.quiz{background:var(--quiz-light);color:var(--quiz);}
   .class-tag{font-size:12px;color:var(--muted);font-weight:500;}
+
+  .meta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;}
+  .outstanding-badge{
+    color:var(--muted);font-weight:600;background:var(--bg);padding:4px 10px;border-radius:99px;white-space:nowrap;
+  }
+  .outstanding-badge.warn{color:var(--amber);background:var(--amber-light);}
+  .outstanding-badge.overdue{color:var(--red);background:var(--red-light);}
+  .due-field{display:flex;align-items:center;gap:6px;}
+  .due-field input[type=date]{
+    width:auto;padding:4px 8px;margin:0;border:1.5px solid var(--border);border-radius:7px;font-size:12px;
+    font-family:inherit;color:var(--text);background:#fff;
+  }
+  .due-tag{padding:3px 9px;border-radius:99px;font-weight:700;font-size:11px;white-space:nowrap;}
+  .due-tag.due-overdue{background:var(--red-light);color:var(--red);}
+  .due-tag.due-today, .due-tag.due-soon{background:var(--amber-light);color:var(--amber);}
+  .due-tag.due-normal{background:var(--green-light);color:var(--green);}
+
+  .score-row{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:13px;}
+  .score-row label{font-weight:600;color:var(--muted);white-space:nowrap;}
+  .score-row input{
+    padding:5px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;
+    font-family:inherit;color:var(--text);background:#fff;width:180px;
+  }
+  .score-row input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-light);}
 
   .module-step{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;font-weight:500;color:var(--muted);}
   .module-step input{
@@ -294,6 +335,15 @@
     font-weight:700;color:var(--module);text-align:center;
   }
   .module-step input:focus{border-color:var(--module);box-shadow:0 0 0 3px var(--module-light);}
+  .timer-row{display:flex;align-items:center;gap:10px;margin-top:10px;}
+  .timer-display{font-family:'Lexend',monospace;font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.02em;}
+  .timer-row.running .timer-display{color:var(--red);}
+  .btn.small.timer-start{background:var(--primary-light);color:var(--primary-dark);}
+  .btn.small.timer-start:hover{background:#e2e2ff;}
+  .btn.small.timer-stop{background:var(--red-light);color:var(--red);}
+  .btn.small.timer-stop:hover{background:#fbdada;}
+  .timer-row.running .timer-stop{animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.25);}50%{box-shadow:0 0 0 5px rgba(220,38,38,0);}}
   .assignment-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center;}
   .upload-log{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.6;}
   .upload-log a{opacity:.6;}
@@ -302,6 +352,11 @@
     color:var(--muted);font-size:14px;padding:40px 20px;text-align:center;
     background:var(--bg);border-radius:var(--radius-sm);border:1.5px dashed var(--border);
   }
+  .completed-hint{
+    font-size:12.5px;color:var(--muted);margin-bottom:12px;font-weight:500;
+  }
+  .completed-hint a{color:var(--primary);font-weight:600;text-decoration:none;}
+  .completed-hint a:hover{text-decoration:underline;}
 
   .month-nav{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
   .month-nav button{background:none;border:1px solid var(--border);border-radius:6px;padding:4px 10px;}
@@ -327,6 +382,31 @@
     font-size:12.5px;font-weight:700;color:var(--green);white-space:nowrap;
     background:var(--green-light);padding:5px 12px;border-radius:99px;
   }
+
+  .report-overlay{display:none;position:fixed;inset:0;background:#fff;z-index:200;overflow:auto;}
+  .report-overlay.open{display:block;}
+  .report-toolbar{
+    position:sticky;top:0;background:#fff;border-bottom:1.5px solid var(--border-soft);
+    padding:14px 24px;display:flex;justify-content:flex-end;gap:10px;z-index:2;
+  }
+  .report-body{max-width:820px;margin:0 auto;padding:36px;color:var(--text);}
+  .report-body h1{font-size:26px;margin:0 0 4px;}
+  .report-body .report-sub{color:var(--muted);font-size:14px;margin-bottom:26px;}
+  .report-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:30px;}
+  .report-summary .stat{background:var(--bg);}
+  .report-section{margin-bottom:28px;}
+  .report-section h2{font-size:16px;margin:0 0 10px;border-bottom:2px solid var(--border);padding-bottom:8px;}
+  .report-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .report-table th, .report-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--border-soft);}
+  .report-table th{color:var(--muted);font-weight:700;text-transform:uppercase;font-size:10.5px;letter-spacing:.04em;}
+  .report-empty{color:var(--muted);font-size:13px;font-style:italic;}
+
+  @media print{
+    body > *:not(.report-overlay){display:none !important;}
+    .report-overlay{position:static !important;}
+    .no-print{display:none !important;}
+    .report-body{padding:0;max-width:none;}
+  }
 </style>
 </head>
 <body>
@@ -345,12 +425,33 @@
     <ul class="class-list" id="classList"></ul>
     <input type="text" id="newClassName" placeholder="New class name">
     <button class="btn" style="width:100%" onclick="addClass()">+ Add class</button>
+
+    <div class="backup-section">
+      <h2>Report</h2>
+      <div class="backup-buttons">
+        <button class="btn secondary" onclick="openReport('today')">📄 Today</button>
+        <button class="btn secondary" onclick="openReport('week')">📄 This week (Mon–Fri)</button>
+        <button class="btn secondary" onclick="openReport('month')">📄 Last 30 days</button>
+      </div>
+    </div>
+
+    <div class="backup-section">
+      <h2>Backup</h2>
+      <div class="backup-buttons">
+        <button class="btn secondary" onclick="exportData()">⬇ Export data</button>
+        <button class="btn secondary" onclick="document.getElementById('importFile').click()">⬆ Import data</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none" onchange="importData(this.files[0])">
+    </div>
   </div>
 
   <div class="panel main">
     <div class="dashboard" id="dashboard"></div>
 
-    <h2 id="mainTitle">All classes</h2>
+    <div class="main-header">
+      <h2 id="mainTitle">All classes</h2>
+      <div id="workedTodayWrap"></div>
+    </div>
 
     <div id="noWorkBanner"></div>
 
@@ -369,12 +470,17 @@
           <label>Class</label>
           <select id="newAssignClass"></select>
         </div>
+        <div class="field" style="min-width:150px;">
+          <label>Due date (optional)</label>
+          <input type="date" id="newAssignDue">
+        </div>
         <div class="field" style="flex-basis:100%;">
           <label>Type (pick one or more)</label>
           <div class="type-checks">
             <label><input type="checkbox" value="journal" class="typeCheck"> Journal</label>
             <label><input type="checkbox" value="module" class="typeCheck"> Module</label>
             <label><input type="checkbox" value="dropbox" class="typeCheck"> Dropbox</label>
+            <label><input type="checkbox" value="quiz" class="typeCheck"> Quiz</label>
           </div>
         </div>
         <div class="field" style="min-width:100px;flex:0 0 auto;">
@@ -387,6 +493,23 @@
 
     <div id="historyView" style="display:none;"></div>
   </div>
+</div>
+
+<datalist id="scoreOptions">
+  <option value="Excellent">
+  <option value="Very Good">
+  <option value="Good">
+  <option value="Satisfactory">
+  <option value="Needs Improvement">
+  <option value="100%">
+</datalist>
+
+<div class="report-overlay" id="reportOverlay">
+  <div class="report-toolbar no-print">
+    <button class="btn secondary" onclick="closeReport()">✕ Close</button>
+    <button class="btn" onclick="window.print()">🖨 Download / Print PDF</button>
+  </div>
+  <div class="report-body" id="reportBody"></div>
 </div>
 
 <script>
@@ -403,18 +526,88 @@ function saveData(){
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-let data = loadData();
+function exportData(){
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `school-tracker-backup-${todayISO()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try{
+      parsed = JSON.parse(reader.result);
+    }catch(e){
+      alert('That file is not valid JSON.');
+      return;
+    }
+    if(!parsed || !Array.isArray(parsed.classes) || !Array.isArray(parsed.assignments)){
+      alert('That file doesn\'t look like a School Tracker backup.');
+      return;
+    }
+    if(!confirm('This will replace all current data with the imported file. Continue?')) return;
+    data = migrateData(parsed);
+    selectedClassId = null;
+    saveData();
+    render();
+    document.getElementById('importFile').value = '';
+  };
+  reader.readAsText(file);
+}
+
+function migrateData(d){
+  if(!d.classes) d.classes = [];
+  if(!d.assignments) d.assignments = [];
+  d.classes.forEach(c=>{
+    if(c.noWorkAssigned===undefined) c.noWorkAssigned = false;
+    if(!c.workLog) c.workLog = [];
+  });
+  d.assignments.forEach(a=>{
+    if(a.dueDate===undefined) a.dueDate = null;
+    if(!a.createdDate) a.createdDate = a.completedDate || todayISO();
+    if(a.score===undefined) a.score = '';
+    if(!a.timeSessions){
+      a.timeSessions = (a.totalSeconds && a.totalSeconds > 0)
+        ? [{ date: a.completedDate || a.createdDate, seconds: a.totalSeconds }]
+        : [];
+    }
+    delete a.totalSeconds;
+    if(a.timerStart===undefined) a.timerStart = null;
+    if(!a.uploads) a.uploads = [];
+  });
+  return d;
+}
+
+let data = migrateData(loadData());
 let selectedClassId = null; // null = all classes
 let currentView = 'board'; // 'board' | 'history'
-let viewMonth = new Date().getMonth();
-let viewYear = new Date().getFullYear();
 
 function uid(){
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 }
 
+function toISODate(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
 function todayISO(){
-  return new Date().toISOString().slice(0,10);
+  return toISODate(new Date());
+}
+
+function daysBetween(isoA, isoB){
+  const a = new Date(isoA+'T00:00:00');
+  const b = new Date(isoB+'T00:00:00');
+  return Math.round((b-a)/86400000);
+}
+
+function formatDateNice(d){
+  return d.toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' });
 }
 
 // ---------- Classes ----------
@@ -422,7 +615,7 @@ function addClass(){
   const input = document.getElementById('newClassName');
   const name = input.value.trim();
   if(!name) return;
-  data.classes.push({ id: uid(), name, noWorkAssigned: false });
+  data.classes.push({ id: uid(), name, noWorkAssigned: false, workLog: [] });
   input.value = '';
   saveData();
   render();
@@ -432,6 +625,17 @@ function toggleNoWork(id, evt){
   if(evt) evt.stopPropagation();
   const cls = data.classes.find(c=>c.id===id);
   cls.noWorkAssigned = !cls.noWorkAssigned;
+  saveData();
+  render();
+}
+
+function toggleWorkedToday(classId){
+  const cls = data.classes.find(c=>c.id===classId);
+  if(!cls.workLog) cls.workLog = [];
+  const today = todayISO();
+  const idx = cls.workLog.indexOf(today);
+  if(idx === -1) cls.workLog.push(today);
+  else cls.workLog.splice(idx, 1);
   saveData();
   render();
 }
@@ -456,6 +660,7 @@ function selectClass(id){
 function addAssignment(){
   const nameInput = document.getElementById('newAssignName');
   const classSelect = document.getElementById('newAssignClass');
+  const dueInput = document.getElementById('newAssignDue');
   const name = nameInput.value.trim();
   const classId = classSelect.value;
   const types = Array.from(document.querySelectorAll('.typeCheck:checked')).map(c=>c.value);
@@ -472,13 +677,32 @@ function addAssignment(){
     moduleStep: types.includes('module') ? '1.1' : '',
     done: false,
     completedDate: null,
-    uploads: []
+    createdDate: todayISO(),
+    dueDate: dueInput.value || null,
+    score: '',
+    uploads: [],
+    timeSessions: [],
+    timerStart: null
   });
 
   nameInput.value = '';
+  dueInput.value = '';
   document.querySelectorAll('.typeCheck').forEach(c=>c.checked=false);
   saveData();
   render();
+}
+
+function updateDueDate(id, value){
+  const a = data.assignments.find(x=>x.id===id);
+  a.dueDate = value || null;
+  saveData();
+  render();
+}
+
+function updateScore(id, value){
+  const a = data.assignments.find(x=>x.id===id);
+  a.score = value;
+  saveData();
 }
 
 function deleteAssignment(id){
@@ -492,6 +716,10 @@ function toggleDone(id){
   const a = data.assignments.find(x=>x.id===id);
   a.done = !a.done;
   a.completedDate = a.done ? todayISO() : null;
+  if(a.done && a.timerStart){
+    addSessionSeconds(a, (Date.now()-a.timerStart)/1000);
+    a.timerStart = null;
+  }
   saveData();
   render();
 }
@@ -499,6 +727,92 @@ function toggleDone(id){
 function setView(view){
   currentView = view;
   render();
+}
+
+// ---------- Timers ----------
+let tickInterval = null;
+
+function addSessionSeconds(a, seconds){
+  if(seconds <= 0) return;
+  const d = todayISO();
+  let sess = a.timeSessions.find(s=>s.date===d);
+  if(sess) sess.seconds += seconds;
+  else a.timeSessions.push({ date: d, seconds });
+}
+
+// from/to are ISO dates (inclusive); omit both for all-time total
+function getAssignmentSeconds(a, from, to){
+  let s = 0;
+  (a.timeSessions||[]).forEach(sess=>{
+    if((!from || sess.date>=from) && (!to || sess.date<=to)) s += sess.seconds;
+  });
+  if(a.timerStart){
+    const today = todayISO();
+    if((!from || today>=from) && (!to || today<=to)){
+      s += (Date.now() - a.timerStart) / 1000;
+    }
+  }
+  return s;
+}
+
+function formatDuration(totalSeconds){
+  totalSeconds = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(totalSeconds/3600);
+  const m = Math.floor((totalSeconds%3600)/60);
+  const s = totalSeconds%60;
+  if(h>0) return `${h}h ${m}m`;
+  if(m>0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function startTimer(id){
+  // only one timer can run at a time
+  data.assignments.forEach(a=>{
+    if(a.timerStart){
+      addSessionSeconds(a, (Date.now()-a.timerStart)/1000);
+      a.timerStart = null;
+    }
+  });
+  const target = data.assignments.find(a=>a.id===id);
+  target.timerStart = Date.now();
+  saveData();
+  render();
+}
+
+function stopTimer(id){
+  const a = data.assignments.find(x=>x.id===id);
+  if(a.timerStart){
+    addSessionSeconds(a, (Date.now()-a.timerStart)/1000);
+    a.timerStart = null;
+  }
+  saveData();
+  render();
+}
+
+function ensureTicking(){
+  const running = data.assignments.some(a=>a.timerStart);
+  if(running && !tickInterval){
+    tickInterval = setInterval(tickUpdate, 1000);
+  } else if(!running && tickInterval){
+    clearInterval(tickInterval);
+    tickInterval = null;
+  }
+}
+
+function tickUpdate(){
+  data.assignments.forEach(a=>{
+    if(!a.timerStart) return;
+    const el = document.getElementById(`timer-disp-${a.id}`);
+    if(el) el.textContent = formatDuration(getAssignmentSeconds(a));
+  });
+  const statEl = document.getElementById('statTime');
+  if(statEl){
+    const relevant = selectedClassId
+      ? data.assignments.filter(a=>a.classId===selectedClassId)
+      : data.assignments;
+    const total = relevant.reduce((sum,a)=>sum+getAssignmentSeconds(a), 0);
+    statEl.textContent = formatDuration(total);
+  }
 }
 
 function updateModuleStep(id, value){
@@ -559,10 +873,25 @@ function render(){
   renderClassSelect();
   renderDashboard();
   renderNoWorkBanner();
+  renderWorkedToday();
   renderViewTabs();
   renderAssignments();
   renderHistory();
   updateUploadBadge();
+  ensureTicking();
+}
+
+function renderWorkedToday(){
+  const wrap = document.getElementById('workedTodayWrap');
+  if(!selectedClassId){ wrap.innerHTML=''; return; }
+  const cls = data.classes.find(c=>c.id===selectedClassId);
+  if(!cls){ wrap.innerHTML=''; return; }
+  const logged = (cls.workLog||[]).includes(todayISO());
+  wrap.innerHTML = `
+    <button class="worked-btn ${logged?'logged':''}" onclick="toggleWorkedToday('${cls.id}')">
+      ${logged ? '✔ Worked on this today' : '📝 I\'ve worked on this today'}
+    </button>
+  `;
 }
 
 function renderViewTabs(){
@@ -592,17 +921,18 @@ function renderClassList(){
   const allLi = document.createElement('li');
   allLi.className = selectedClassId===null ? 'active' : '';
   allLi.onclick = ()=>selectClass(null);
-  allLi.innerHTML = `<span>All classes</span><span class="count">${data.assignments.length}</span>`;
+  const allTodo = data.assignments.filter(a=>!a.done).length;
+  allLi.innerHTML = `<span>All classes</span><span class="count" title="assignments still to do">${allTodo}</span>`;
   list.appendChild(allLi);
 
   data.classes.forEach(c=>{
-    const count = data.assignments.filter(a=>a.classId===c.id).length;
+    const count = data.assignments.filter(a=>a.classId===c.id && !a.done).length;
     const li = document.createElement('li');
     li.className = (selectedClassId===c.id ? 'active ' : '') + (c.noWorkAssigned ? 'no-work' : '');
     li.onclick = ()=>selectClass(c.id);
     const rightSide = c.noWorkAssigned
       ? `<span class="no-work-tag">no work</span>`
-      : `<span class="count">${count}</span>`;
+      : `<span class="count" title="assignments still to do">${count}</span>`;
     li.innerHTML = `<span>${escapeHtml(c.name)}</span><span style="display:flex;align-items:center;gap:6px;">${rightSide}<button class="del-btn no-work-btn" title="Toggle: no work assigned">📭</button><button class="del-btn" title="Delete class">✕</button></span>`;
     li.querySelector('.no-work-btn').onclick = (e)=>toggleNoWork(c.id, e);
     li.querySelector('.del-btn:last-child').onclick = (e)=>deleteClass(c.id, e);
@@ -638,6 +968,7 @@ function renderDashboard(){
   const now = new Date();
   const monthCount = uploadsInMonth(now.getFullYear(), now.getMonth());
   const monthName = now.toLocaleString('default',{month:'long'});
+  const timeTotal = relevant.reduce((sum,a)=>sum+getAssignmentSeconds(a), 0);
 
   dash.innerHTML = `
     <div class="stat">
@@ -653,22 +984,36 @@ function renderDashboard(){
       <div class="num" style="color:${monthCount>=5?'var(--green)':'var(--red)'}">${monthCount}/5</div>
       <div class="label">Dropbox uploads in ${monthName}</div>
     </div>
+    <div class="stat">
+      <div class="num" id="statTime">${formatDuration(timeTotal)}</div>
+      <div class="label">Time spent${selectedClassId?'':' (all classes)'}</div>
+    </div>
   `;
 }
 
 function renderAssignments(){
   const container = document.getElementById('assignmentList');
-  const list = (selectedClassId
+  const scoped = selectedClassId
     ? data.assignments.filter(a=>a.classId===selectedClassId)
-    : data.assignments
-  ).slice().sort((a,b)=> (a.done - b.done) || a.name.localeCompare(b.name));
+    : data.assignments;
+  const doneCount = scoped.filter(a=>a.done).length;
+  const list = scoped.filter(a=>!a.done).slice().sort((a,b)=>{
+    if(a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate) || a.name.localeCompare(b.name);
+    if(a.dueDate) return -1;
+    if(b.dueDate) return 1;
+    return a.name.localeCompare(b.name);
+  });
+
+  const hint = doneCount > 0
+    ? `<div class="completed-hint">✅ ${doneCount} completed — <a href="#" onclick="event.preventDefault();setView('history')">view in History</a></div>`
+    : '';
 
   if(list.length===0){
-    container.innerHTML = '<div class="empty">No assignments yet. Add one above.</div>';
+    container.innerHTML = hint + `<div class="empty">Nothing left to do${doneCount>0?' — great work!':'. Add an assignment above.'}</div>`;
     return;
   }
 
-  container.innerHTML = list.map(a=>{
+  container.innerHTML = hint + list.map(a=>{
     const cls = data.classes.find(c=>c.id===a.classId);
     const badges = a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join('');
     const moduleStep = a.types.includes('module') ? `
@@ -681,6 +1026,39 @@ function renderAssignments(){
       <div class="upload-log">Uploaded: ${a.uploads.map((d,i)=>`${d} <a href="#" onclick="event.preventDefault();removeUpload('${a.id}',${i})" style="color:var(--red);text-decoration:none;">✕</a>`).join(', ')}</div>
     ` : '';
 
+    const running = !!a.timerStart;
+    const timerRow = `
+      <div class="timer-row ${running?'running':''}">
+        <button class="btn small ${running?'timer-stop':'timer-start'}" onclick="${running?`stopTimer('${a.id}')`:`startTimer('${a.id}')`}">
+          ${running?'⏸ Stop':'▶ Start'} timer
+        </button>
+        <span class="timer-display" id="timer-disp-${a.id}">${formatDuration(getAssignmentSeconds(a))}</span>
+      </div>`;
+
+    const outstandingDays = daysBetween(a.createdDate || todayISO(), todayISO());
+    const outstandingLabel = outstandingDays<=0 ? 'Added today' : outstandingDays===1 ? 'Open 1 day' : `Open ${outstandingDays} days`;
+    const outstandingClass = outstandingDays>=14 ? 'overdue' : outstandingDays>=7 ? 'warn' : '';
+
+    let dueTagHtml = '';
+    if(a.dueDate){
+      const diff = daysBetween(todayISO(), a.dueDate);
+      let dueClass='due-normal', dueLabel;
+      if(diff<0){ dueClass='due-overdue'; dueLabel=`Overdue ${Math.abs(diff)}d`; }
+      else if(diff===0){ dueClass='due-today'; dueLabel='Due today'; }
+      else if(diff<=3){ dueClass='due-soon'; dueLabel=diff===1?'Due tomorrow':`Due in ${diff}d`; }
+      else { dueLabel=`Due in ${diff}d`; }
+      dueTagHtml = `<span class="due-tag ${dueClass}">${dueLabel}</span>`;
+    }
+
+    const metaRow = `
+      <div class="meta-row">
+        <span class="outstanding-badge ${outstandingClass}">🕒 ${outstandingLabel}</span>
+        <span class="due-field">
+          📅 <input type="date" value="${a.dueDate||''}" onchange="updateDueDate('${a.id}', this.value)" title="Due date">
+          ${dueTagHtml}
+        </span>
+      </div>`;
+
     return `
       <div class="assignment ${a.done?'done':''}">
         <input type="checkbox" ${a.done?'checked':''} onchange="toggleDone('${a.id}')">
@@ -692,7 +1070,9 @@ function renderAssignments(){
             </div>
           </div>
           <div class="badges">${badges}</div>
+          ${metaRow}
           ${moduleStep}
+          ${timerRow}
           <div class="assignment-actions">
             <button class="btn small" onclick="logUpload('${a.id}')">⬆ Log dropbox upload</button>
             <button class="btn small secondary" onclick="deleteAssignment('${a.id}')">Delete</button>
@@ -729,8 +1109,15 @@ function renderHistory(){
           <span class="hist-name">${escapeHtml(a.name)}</span>
           ${selectedClassId===null ? `<span class="class-tag"> · ${escapeHtml(cls?.name||'')}</span>` : ''}
           <div class="badges">${badges}</div>
+          <div class="score-row">
+            <label>Score:</label>
+            <input list="scoreOptions" value="${escapeHtml(a.score||'')}" placeholder="e.g. 85% or Very Good" onchange="updateScore('${a.id}', this.value)">
+          </div>
         </div>
-        <span class="hist-date">✅ ${a.completedDate}</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          ${getAssignmentSeconds(a) > 0 ? `<span class="class-tag">⏱ ${formatDuration(getAssignmentSeconds(a))}</span>` : ''}
+          <span class="hist-date">✅ ${a.completedDate}</span>
+        </span>
       </div>
     `;
   }).join('');
@@ -740,6 +1127,97 @@ function escapeHtml(str){
   const d = document.createElement('div');
   d.textContent = str ?? '';
   return d.innerHTML;
+}
+
+// ---------- Reports ----------
+function getWeekRange(){
+  const now = new Date();
+  const day = now.getDay(); // 0=Sun..6=Sat
+  const diffToMonday = day===0 ? -6 : 1-day;
+  const monday = new Date(now); monday.setDate(now.getDate()+diffToMonday);
+  const friday = new Date(monday); friday.setDate(monday.getDate()+4);
+  return {
+    from: toISODate(monday),
+    to: toISODate(friday),
+    label: `This week (${formatDateNice(monday)} – ${formatDateNice(friday)})`
+  };
+}
+
+function getRangeFor(rangeType){
+  const today = todayISO();
+  if(rangeType==='today'){
+    return { from: today, to: today, label: `Today (${formatDateNice(new Date())})` };
+  }
+  if(rangeType==='week') return getWeekRange();
+  if(rangeType==='month'){
+    const from = new Date(); from.setDate(from.getDate()-29);
+    return { from: toISODate(from), to: today, label: `Last 30 days (${formatDateNice(from)} – ${formatDateNice(new Date())})` };
+  }
+}
+
+function buildReportHTML(range){
+  const { from, to, label } = range;
+  let totalSeconds = 0, totalUploads = 0, totalCompleted = 0;
+
+  const classSections = data.classes.map(cls=>{
+    const classAssignments = data.assignments.filter(a=>a.classId===cls.id);
+    const classSeconds = classAssignments.reduce((s,a)=>s+getAssignmentSeconds(a, from, to), 0);
+    const classUploads = classAssignments.reduce((s,a)=>s+a.uploads.filter(d=>d>=from && d<=to).length, 0);
+    const classCompleted = classAssignments.filter(a=>a.done && a.completedDate && a.completedDate>=from && a.completedDate<=to);
+
+    totalSeconds += classSeconds;
+    totalUploads += classUploads;
+    totalCompleted += classCompleted.length;
+
+    const rows = classAssignments
+      .map(a=>({ a, secs: getAssignmentSeconds(a, from, to) }))
+      .filter(({a,secs}) => secs>0 || (a.done && a.completedDate>=from && a.completedDate<=to))
+      .sort((x,y)=>y.secs-x.secs);
+
+    if(classSeconds===0 && classCompleted.length===0 && classUploads===0) return '';
+
+    return `
+      <div class="report-section">
+        <h2>${escapeHtml(cls.name)} — ${formatDuration(classSeconds)}${classUploads?` · ${classUploads} upload${classUploads===1?'':'s'}`:''}</h2>
+        ${rows.length ? `
+        <table class="report-table">
+          <thead><tr><th>Assignment</th><th>Type</th><th>Time</th><th>Status</th><th>Score</th></tr></thead>
+          <tbody>
+            ${rows.map(({a,secs})=>`
+              <tr>
+                <td>${escapeHtml(a.name)}</td>
+                <td>${a.types.join(', ')}</td>
+                <td>${secs>0 ? formatDuration(secs) : '—'}</td>
+                <td>${a.done && a.completedDate>=from && a.completedDate<=to ? `Completed ${a.completedDate}` : (a.done ? 'Completed earlier' : 'In progress')}</td>
+                <td>${escapeHtml(a.score || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>` : `<div class="report-empty">No activity logged in this class for this period.</div>`}
+      </div>
+    `;
+  }).filter(Boolean).join('');
+
+  return `
+    <h1>📚 School Tracker Report</h1>
+    <div class="report-sub">${label} · generated ${formatDateNice(new Date())}</div>
+    <div class="report-summary">
+      <div class="stat"><div class="num">${formatDuration(totalSeconds)}</div><div class="label">Total time worked</div></div>
+      <div class="stat"><div class="num">${totalCompleted}</div><div class="label">Assignments completed</div></div>
+      <div class="stat"><div class="num">${totalUploads}</div><div class="label">Dropbox uploads</div></div>
+    </div>
+    ${classSections || '<div class="report-empty">No activity logged for this period.</div>'}
+  `;
+}
+
+function openReport(rangeType){
+  const range = getRangeFor(rangeType);
+  document.getElementById('reportBody').innerHTML = buildReportHTML(range);
+  document.getElementById('reportOverlay').classList.add('open');
+}
+
+function closeReport(){
+  document.getElementById('reportOverlay').classList.remove('open');
 }
 
 render();
