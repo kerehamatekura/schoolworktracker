@@ -1,12 +1,15 @@
 {
   "manifest_version": 3,
   "name": "School Tracker Timer",
-  "version": "1.0.0",
-  "description": "Quickly start and stop assignment timers for trackschool.kerehama.nz without opening the full page.",
+  "version": "1.1.0",
+  "description": "Quickly start and stop assignment timers for trackschool.kerehama.nz, with a live badge showing the running timer.",
   "action": {
     "default_popup": "popup.html",
     "default_title": "School Tracker Timer"
   },
-  "permissions": ["scripting", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["scripting", "tabs", "alarms"],
   "host_permissions": ["https://trackschool.kerehama.nz/*"]
 }

@@ -1,6 +1,9 @@
 const TRACKER_URL_PATTERN = 'https://trackschool.kerehama.nz/*';
 const TRACKER_URL = 'https://trackschool.kerehama.nz/';
 
+const RING_RADIUS = 54;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
+
 let tabId = null;
 let state = null; // { classes, assignments }
 let tickInterval = null;
@@ -68,6 +71,21 @@ function getAssignmentSeconds(a){
   return s;
 }
 
+function todayISO(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getTodaySeconds(){
+  const today = todayISO();
+  let total = 0;
+  state.assignments.forEach(a=>{
+    (a.timeSessions || []).forEach(sess => { if(sess.date === today) total += sess.seconds; });
+    if(a.timerStart) total += (Date.now() - a.timerStart) / 1000;
+  });
+  return total;
+}
+
 function formatDuration(totalSeconds){
   totalSeconds = Math.max(0, Math.round(totalSeconds));
   const h = Math.floor(totalSeconds / 3600);
@@ -111,15 +129,38 @@ function renderApp(){
     <select id="assignSelect" disabled>
       <option value="">Select a subject first...</option>
     </select>
-    <div class="timer-display idle" id="timerDisplay">00:00</div>
+
+    <div class="timer-ring-wrap" id="ringWrap">
+      <svg class="timer-ring" viewBox="0 0 120 120">
+        <defs>
+          <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#5b5bf6"/>
+            <stop offset="100%" stop-color="#ec4899"/>
+          </linearGradient>
+        </defs>
+        <circle class="ring-track" cx="60" cy="60" r="${RING_RADIUS}"></circle>
+        <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="${RING_RADIUS}"
+          stroke-dasharray="${RING_CIRCUMFERENCE}" stroke-dashoffset="${RING_CIRCUMFERENCE}"></circle>
+      </svg>
+      <div class="timer-ring-text idle" id="timerDisplay">00:00</div>
+    </div>
+
     <button class="btn-start" id="actionBtn" disabled>▶ Start timer</button>
+    <div class="today-stat">
+      <span>Today's total</span>
+      <strong id="todayTotal">${formatDuration(getTodaySeconds())}</strong>
+    </div>
     <a class="footer-link" href="${TRACKER_URL}" id="openLink">Open full tracker →</a>
   `;
+
+  const todayTotalEl = document.getElementById('todayTotal');
 
   const classSelect = document.getElementById('classSelect');
   const assignSelect = document.getElementById('assignSelect');
   const actionBtn = document.getElementById('actionBtn');
   const timerDisplay = document.getElementById('timerDisplay');
+  const ringWrap = document.getElementById('ringWrap');
+  const ringFill = document.getElementById('ringFill');
 
   document.getElementById('openLink').onclick = (e) => {
     e.preventDefault();
@@ -135,14 +176,23 @@ function renderApp(){
     assignSelect.disabled = list.length === 0;
   }
 
+  function setRing(seconds, running){
+    const progress = (seconds % 60) / 60;
+    const offset = running ? RING_CIRCUMFERENCE * (1 - progress) : RING_CIRCUMFERENCE;
+    ringFill.style.strokeDashoffset = offset;
+    ringFill.classList.toggle('running', running);
+    ringWrap.classList.toggle('running', running);
+  }
+
   function updateButtonState(){
     const selectedId = assignSelect.value;
     if(!selectedId){
       actionBtn.disabled = true;
       actionBtn.textContent = '▶ Start timer';
       actionBtn.className = 'btn-start';
-      timerDisplay.className = 'timer-display idle';
+      timerDisplay.className = 'timer-ring-text idle';
       timerDisplay.textContent = '00:00';
+      setRing(0, false);
       clearInterval(tickInterval);
       return;
     }
@@ -155,15 +205,21 @@ function renderApp(){
     }else{
       actionBtn.textContent = '▶ Start timer';
       actionBtn.className = 'btn-start';
-      timerDisplay.className = 'timer-display idle';
+      timerDisplay.className = 'timer-ring-text idle';
       timerDisplay.textContent = formatDuration(getAssignmentSeconds(a));
+      setRing(0, false);
       clearInterval(tickInterval);
     }
   }
 
   function startTicking(a){
-    timerDisplay.className = 'timer-display running';
-    const tick = () => { timerDisplay.textContent = formatDuration(getAssignmentSeconds(a)); };
+    timerDisplay.className = 'timer-ring-text running';
+    const tick = () => {
+      const secs = getAssignmentSeconds(a);
+      timerDisplay.textContent = formatDuration(secs);
+      setRing(secs, true);
+      if(todayTotalEl) todayTotalEl.textContent = formatDuration(getTodaySeconds());
+    };
     tick();
     tickInterval = setInterval(tick, 1000);
   }
@@ -192,6 +248,7 @@ function renderApp(){
     }else{
       await chrome.scripting.executeScript({ target: { tabId }, world: 'MAIN', func: (id) => { window.startTimer(id); }, args: [selectedId] });
     }
+    chrome.runtime.sendMessage({ type: 'refreshBadge' });
     await refreshState();
   };
 

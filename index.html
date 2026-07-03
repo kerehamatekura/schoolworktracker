@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>School Tracker</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>%F0%9F%93%9A</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Lexend:wght@600;700;800&display=swap" rel="stylesheet">
@@ -79,6 +80,8 @@
     gap:10px;
     letter-spacing:-.01em;
   }
+  .header-title{display:flex;flex-direction:column;gap:2px;}
+  .header-date{font-size:12.5px;color:rgba(255,255,255,.75);font-weight:500;margin-left:48px;}
   header h1 .logo{
     display:inline-flex;align-items:center;justify-content:center;
     width:38px;height:38px;border-radius:11px;
@@ -111,6 +114,11 @@
     padding:24px;
     max-width:1200px;
     margin:0 auto;
+    animation:appFadeIn .35s ease;
+  }
+  @keyframes appFadeIn{
+    from{opacity:0;transform:translateY(6px);}
+    to{opacity:1;transform:translateY(0);}
   }
   @media (max-width:800px){
     .layout{grid-template-columns:1fr;padding:16px;}
@@ -147,6 +155,7 @@
   }
   .class-list li:hover{background:var(--primary-light);}
   .class-list li:active{transform:scale(.98);}
+  .class-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:8px;flex-shrink:0;vertical-align:middle;}
   .class-list li.active{background:var(--primary);color:#fff;box-shadow:0 6px 14px -4px rgba(91,91,246,.55);}
   .class-list li.active .count{color:#fff;background:rgba(255,255,255,.22);}
   .class-list li.no-work{opacity:.75;}
@@ -215,6 +224,14 @@
   .btn.secondary:hover{background:var(--bg);border-color:#d7dbe8;}
 
   .main h2{margin-top:0;font-size:19px;font-weight:700;letter-spacing:-.01em;}
+  .onboarding{
+    background:linear-gradient(160deg,var(--primary-light),var(--quiz-light));
+    border:1.5px dashed var(--primary);border-radius:var(--radius-sm);
+    padding:30px 24px;text-align:center;margin-bottom:22px;
+  }
+  .onboarding .ob-icon{font-size:32px;margin-bottom:10px;}
+  .onboarding h3{margin:0 0 6px;font-size:17px;font-family:'Lexend',sans-serif;}
+  .onboarding p{margin:0 auto;max-width:420px;color:var(--muted);font-size:13.5px;line-height:1.5;}
   .main-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;}
   .main-header h2{margin:0;}
   .worked-btn{
@@ -427,6 +444,17 @@
   .pending-due.overdue{background:var(--red-light);color:var(--red);}
   .pending-due.soon{background:var(--amber-light);color:var(--amber);}
   .pending-due.normal{background:var(--bg);color:var(--muted);}
+  .pending-step{
+    font-size:10.5px;font-weight:700;background:var(--module-light);color:var(--module);
+    padding:2px 8px;border-radius:99px;margin-left:6px;white-space:nowrap;
+  }
+
+  .highlights-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;}
+  .highlight-card{background:var(--bg);border-radius:10px;padding:16px;text-align:center;}
+  .highlight-card .hl-icon{font-size:20px;margin-bottom:6px;}
+  .highlight-card .hl-label{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700;margin-bottom:5px;}
+  .highlight-card .hl-value{font-size:14px;font-weight:700;line-height:1.3;}
+  .highlight-card .hl-sub{font-size:12px;color:var(--muted);margin-top:3px;}
 
   @media print{
     body > *:not(.report-overlay){display:none !important;}
@@ -441,7 +469,10 @@
 <body>
 
 <header>
-  <h1><span class="logo">📚</span> School Tracker</h1>
+  <div class="header-title">
+    <h1><span class="logo">📚</span> School Tracker</h1>
+    <div class="header-date" id="headerDate"></div>
+  </div>
   <div class="upload-badge" id="uploadBadge">
     <span class="dot" id="uploadDot"></span>
     <span id="uploadText">Loading...</span>
@@ -475,6 +506,7 @@
   </div>
 
   <div class="panel main">
+    <div id="onboarding"></div>
     <div class="dashboard" id="dashboard"></div>
 
     <div class="main-header">
@@ -621,6 +653,14 @@ function uid(){
   return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
 }
 
+const CLASS_COLOR_PALETTE = ['#5b5bf6','#ec4899','#0ea5e9','#f59e0b','#16a34a','#8b5cf6','#14b8a6','#ef4444'];
+function classColor(classId){
+  // Index-based (not a hash of the id) so classes created moments apart
+  // — whose timestamp-based ids are nearly identical — never collide.
+  const idx = data.classes.findIndex(c => c.id === classId);
+  return CLASS_COLOR_PALETTE[(idx < 0 ? 0 : idx) % CLASS_COLOR_PALETTE.length];
+}
+
 function toISODate(d){
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -763,10 +803,9 @@ let tickInterval = null;
 
 function addSessionSeconds(a, seconds){
   if(seconds <= 0) return;
-  const d = todayISO();
-  let sess = a.timeSessions.find(s=>s.date===d);
-  if(sess) sess.seconds += seconds;
-  else a.timeSessions.push({ date: d, seconds });
+  // Each start/stop is kept as its own session (not merged into the day's total)
+  // so reports can show session counts and average session length.
+  a.timeSessions.push({ date: todayISO(), seconds });
 }
 
 // from/to are ISO dates (inclusive); omit both for all-time total
@@ -898,6 +937,8 @@ function updateUploadBadge(){
 
 // ---------- Rendering ----------
 function render(){
+  renderHeaderDate();
+  renderOnboarding();
   renderClassList();
   renderClassSelect();
   renderDashboard();
@@ -908,6 +949,23 @@ function render(){
   renderHistory();
   updateUploadBadge();
   ensureTicking();
+}
+
+function renderHeaderDate(){
+  const el = document.getElementById('headerDate');
+  if(el) el.textContent = new Date().toLocaleDateString('en-NZ', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
+function renderOnboarding(){
+  const el = document.getElementById('onboarding');
+  if(data.classes.length > 0){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="onboarding">
+      <div class="ob-icon">👋</div>
+      <h3>Welcome to School Tracker</h3>
+      <p>Add your first class over in the sidebar to get started — then add assignments, track modules, log dropbox uploads, and time your work.</p>
+    </div>
+  `;
 }
 
 function renderWorkedToday(){
@@ -962,7 +1020,7 @@ function renderClassList(){
     const rightSide = c.noWorkAssigned
       ? `<span class="no-work-tag">no work</span>`
       : `<span class="count" title="assignments still to do">${count}</span>`;
-    li.innerHTML = `<span>${escapeHtml(c.name)}</span><span style="display:flex;align-items:center;gap:6px;">${rightSide}<button class="del-btn no-work-btn" title="Toggle: no work assigned">📭</button><button class="del-btn" title="Delete class">✕</button></span>`;
+    li.innerHTML = `<span><span class="class-dot" style="background:${classColor(c.id)}"></span>${escapeHtml(c.name)}</span><span style="display:flex;align-items:center;gap:6px;">${rightSide}<button class="del-btn no-work-btn" title="Toggle: no work assigned">📭</button><button class="del-btn" title="Delete class">✕</button></span>`;
     li.querySelector('.no-work-btn').onclick = (e)=>toggleNoWork(c.id, e);
     li.querySelector('.del-btn:last-child').onclick = (e)=>deleteClass(c.id, e);
     list.appendChild(li);
@@ -1088,8 +1146,10 @@ function renderAssignments(){
         </span>
       </div>`;
 
+    const classAccent = selectedClassId===null ? ` style="border-left:4px solid ${classColor(a.classId)}"` : '';
+
     return `
-      <div class="assignment ${a.done?'done':''}">
+      <div class="assignment ${a.done?'done':''}"${classAccent}>
         <input type="checkbox" ${a.done?'checked':''} onchange="toggleDone('${a.id}')">
         <div class="assignment-body">
           <div class="assignment-top">
@@ -1132,8 +1192,9 @@ function renderHistory(){
   container.innerHTML = list.map(a=>{
     const cls = data.classes.find(c=>c.id===a.classId);
     const badges = a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join('');
+    const classAccent = selectedClassId===null ? ` style="border-left:4px solid ${classColor(a.classId)}"` : '';
     return `
-      <div class="history-item">
+      <div class="history-item"${classAccent}>
         <div>
           <span class="hist-name">${escapeHtml(a.name)}</span>
           ${selectedClassId===null ? `<span class="class-tag"> · ${escapeHtml(cls?.name||'')}</span>` : ''}
@@ -1195,9 +1256,36 @@ function pendingDueBadge(a){
   return `<span class="pending-due ${cls}">${label}</span>`;
 }
 
+function moduleStepTag(a){
+  if(!a.types.includes('module') || !a.moduleStep) return '';
+  return ` <span class="pending-step">Step ${escapeHtml(a.moduleStep)}</span>`;
+}
+
+function computeDailyLog(from, to){
+  const days = {};
+  function ensure(d){ if(!days[d]) days[d] = { date: d, secs: 0, uploads: 0, completed: 0 }; return days[d]; }
+  data.assignments.forEach(a=>{
+    (a.timeSessions||[]).forEach(sess=>{
+      if(sess.date>=from && sess.date<=to) ensure(sess.date).secs += sess.seconds;
+    });
+    a.uploads.forEach(d=>{ if(d>=from && d<=to) ensure(d).uploads++; });
+    if(a.done && a.completedDate && a.completedDate>=from && a.completedDate<=to) ensure(a.completedDate).completed++;
+  });
+  return Object.values(days).sort((x,y)=>x.date.localeCompare(y.date));
+}
+
+function computeTypeBreakdown(from, to){
+  return ['journal','module','dropbox','quiz'].map(type=>{
+    const secs = data.assignments.filter(a=>a.types.includes(type)).reduce((s,a)=>s+getAssignmentSeconds(a, from, to), 0);
+    return { type, secs };
+  }).filter(t=>t.secs>0).sort((a,b)=>b.secs-a.secs);
+}
+
 function buildReportHTML(range){
   const { from, to, label } = range;
-  let totalSeconds = 0, totalUploads = 0, totalCompleted = 0, totalPending = 0;
+  let totalCompleted = 0, totalPending = 0;
+
+  const dailyLog = computeDailyLog(from, to);
 
   const uploadsInRange = [];
   data.assignments.forEach(a=>{
@@ -1207,14 +1295,65 @@ function buildReportHTML(range){
     });
   });
   uploadsInRange.sort((x,y)=> y.date.localeCompare(x.date));
-  totalUploads = uploadsInRange.length;
 
   const classTimes = data.classes.map(cls=>{
     const secs = data.assignments.filter(a=>a.classId===cls.id).reduce((s,a)=>s+getAssignmentSeconds(a, from, to), 0);
-    return { name: cls.name, secs };
+    return { id: cls.id, name: cls.name, secs };
   }).filter(c=>c.secs>0).sort((a,b)=>b.secs-a.secs);
   const maxClassSecs = Math.max(1, ...classTimes.map(c=>c.secs));
-  totalSeconds = classTimes.reduce((s,c)=>s+c.secs, 0);
+  const totalSeconds = classTimes.reduce((s,c)=>s+c.secs, 0);
+
+  const typeBreakdown = computeTypeBreakdown(from, to);
+  const maxTypeSecs = Math.max(1, ...typeBreakdown.map(t=>t.secs));
+
+  // Highlights: most-worked assignment, busiest day, average session length
+  let topAssignment = null, topSecs = 0;
+  data.assignments.forEach(a=>{
+    const s = getAssignmentSeconds(a, from, to);
+    if(s > topSecs){ topSecs = s; topAssignment = a; }
+  });
+  let sessionCount = 0, sessionSecsTotal = 0;
+  data.assignments.forEach(a=>{
+    (a.timeSessions||[]).forEach(sess=>{
+      if(sess.date>=from && sess.date<=to){ sessionCount++; sessionSecsTotal += sess.seconds; }
+    });
+  });
+  const avgSessionSecs = sessionCount ? sessionSecsTotal / sessionCount : 0;
+  const busiestDay = dailyLog.slice().sort((a,b)=>b.secs-a.secs)[0];
+
+  // Active days vs days in period
+  const activeDateSet = new Set();
+  dailyLog.forEach(d=>{ if(d.secs>0 || d.uploads>0 || d.completed>0) activeDateSet.add(d.date); });
+  data.classes.forEach(c=>{ (c.workLog||[]).forEach(d=>{ if(d>=from && d<=to) activeDateSet.add(d); }); });
+  const daysInPeriod = daysBetween(from, to) + 1;
+
+  const highlightsHtml = (topAssignment && topSecs>0) || (busiestDay && busiestDay.secs>0) || sessionCount>0 ? `
+    <div class="report-section">
+      <h2>Highlights</h2>
+      <div class="highlights-grid">
+        ${topAssignment && topSecs>0 ? `
+        <div class="highlight-card">
+          <div class="hl-icon">🏆</div>
+          <div class="hl-label">Most time spent</div>
+          <div class="hl-value">${escapeHtml(topAssignment.name)}</div>
+          <div class="hl-sub">${formatDuration(topSecs)} · ${escapeHtml(data.classes.find(c=>c.id===topAssignment.classId)?.name||'')}</div>
+        </div>` : ''}
+        ${busiestDay && busiestDay.secs>0 ? `
+        <div class="highlight-card">
+          <div class="hl-icon">📅</div>
+          <div class="hl-label">Most active day</div>
+          <div class="hl-value">${formatDateNice(new Date(busiestDay.date+'T00:00:00'))}</div>
+          <div class="hl-sub">${formatDuration(busiestDay.secs)} worked</div>
+        </div>` : ''}
+        ${sessionCount>0 ? `
+        <div class="highlight-card">
+          <div class="hl-icon">⏱</div>
+          <div class="hl-label">Avg. session length</div>
+          <div class="hl-value">${formatDuration(avgSessionSecs)}</div>
+          <div class="hl-sub">across ${sessionCount} session${sessionCount===1?'':'s'}</div>
+        </div>` : ''}
+      </div>
+    </div>` : '';
 
   const subjectBars = classTimes.length ? `
     <div class="report-section">
@@ -1223,11 +1362,43 @@ function buildReportHTML(range){
         ${classTimes.map(c=>`
           <div class="subject-bar-row">
             <span class="subject-bar-label">${escapeHtml(c.name)}</span>
-            <span class="subject-bar-track"><span class="subject-bar-fill" style="width:${Math.round(c.secs/maxClassSecs*100)}%"></span></span>
+            <span class="subject-bar-track"><span class="subject-bar-fill" style="width:${Math.round(c.secs/maxClassSecs*100)}%;background:${classColor(c.id)}"></span></span>
             <span class="subject-bar-time">${formatDuration(c.secs)}</span>
           </div>
         `).join('')}
       </div>
+    </div>` : '';
+
+  const typeBars = typeBreakdown.length ? `
+    <div class="report-section">
+      <h2>Time by type</h2>
+      <div class="subject-bars">
+        ${typeBreakdown.map(t=>`
+          <div class="subject-bar-row">
+            <span class="subject-bar-label">${t.type.charAt(0).toUpperCase()+t.type.slice(1)}</span>
+            <span class="subject-bar-track"><span class="subject-bar-fill" style="width:${Math.round(t.secs/maxTypeSecs*100)}%;background:var(--${t.type})"></span></span>
+            <span class="subject-bar-time">${formatDuration(t.secs)}</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : '';
+
+  const dailyLogSection = dailyLog.length ? `
+    <div class="report-section">
+      <h2>Daily activity log</h2>
+      <table class="report-table">
+        <thead><tr><th>Date</th><th>Time worked</th><th>Uploads</th><th>Completed</th></tr></thead>
+        <tbody>
+          ${dailyLog.map(d=>`
+            <tr>
+              <td>${formatDateNice(new Date(d.date+'T00:00:00'))}</td>
+              <td>${d.secs>0 ? formatDuration(d.secs) : '—'}</td>
+              <td>${d.uploads || '—'}</td>
+              <td>${d.completed || '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
     </div>` : '';
 
   const uploadsSection = `
@@ -1241,6 +1412,32 @@ function buildReportHTML(range){
         </tbody>
       </table>` : `<div class="report-empty">No uploads logged in this period.</div>`}
     </div>`;
+
+  const scoredItems = data.assignments
+    .filter(a=>a.done && a.score && a.completedDate && a.completedDate>=from && a.completedDate<=to)
+    .sort((a,b)=>b.completedDate.localeCompare(a.completedDate));
+  const scoresSection = scoredItems.length ? `
+    <div class="report-section">
+      <h2>Scores this period</h2>
+      <table class="report-table">
+        <thead><tr><th>Assignment</th><th>Subject</th><th>Completed</th><th>Score</th></tr></thead>
+        <tbody>
+          ${scoredItems.map(a=>{
+            const cls = data.classes.find(c=>c.id===a.classId);
+            return `<tr><td>${escapeHtml(a.name)}</td><td>${escapeHtml(cls?.name||'')}</td><td>${a.completedDate}</td><td><strong>${escapeHtml(a.score)}</strong></td></tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>` : '';
+
+  const noWorkClasses = data.classes.filter(c=>c.noWorkAssigned);
+  const noWorkSection = noWorkClasses.length ? `
+    <div class="report-section">
+      <h2>Classes with no work assigned</h2>
+      <ul class="pending-list">
+        ${noWorkClasses.map(c=>`<li><span>📭 ${escapeHtml(c.name)}</span></li>`).join('')}
+      </ul>
+    </div>` : '';
 
   const classSections = data.classes.map(cls=>{
     const classAssignments = data.assignments.filter(a=>a.classId===cls.id);
@@ -1264,7 +1461,7 @@ function buildReportHTML(range){
 
     return `
       <div class="report-section">
-        <h2>${escapeHtml(cls.name)}</h2>
+        <h2 style="border-bottom-color:${classColor(cls.id)}">${escapeHtml(cls.name)}</h2>
         <h3>Worked on this period</h3>
         ${workedRows.length ? `
         <table class="report-table">
@@ -1272,7 +1469,7 @@ function buildReportHTML(range){
           <tbody>
             ${workedRows.map(({a,secs})=>`
               <tr>
-                <td>${escapeHtml(a.name)}</td>
+                <td>${escapeHtml(a.name)}${moduleStepTag(a)}</td>
                 <td>${a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join(' ')}</td>
                 <td>${secs>0 ? formatDuration(secs) : '—'}</td>
                 <td>${a.done && a.completedDate>=from && a.completedDate<=to ? `Completed ${a.completedDate}` : (a.done ? 'Completed earlier' : 'In progress')}</td>
@@ -1287,7 +1484,7 @@ function buildReportHTML(range){
         <ul class="pending-list">
           ${pending.map(a=>`
             <li>
-              <span>${escapeHtml(a.name)} ${a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join(' ')}</span>
+              <span>${escapeHtml(a.name)} ${a.types.map(t=>`<span class="badge ${t}">${t}</span>`).join(' ')}${moduleStepTag(a)}</span>
               ${pendingDueBadge(a)}
             </li>
           `).join('')}
@@ -1303,11 +1500,17 @@ function buildReportHTML(range){
     <div class="report-summary">
       <div class="stat"><div class="num">${formatDuration(totalSeconds)}</div><div class="label">Total time worked</div></div>
       <div class="stat"><div class="num">${totalCompleted}</div><div class="label">Assignments completed</div></div>
-      <div class="stat"><div class="num">${totalUploads}</div><div class="label">Dropbox uploads</div></div>
+      <div class="stat"><div class="num">${uploadsInRange.length}</div><div class="label">Dropbox uploads</div></div>
       <div class="stat"><div class="num">${totalPending}</div><div class="label">Assignments pending</div></div>
+      <div class="stat"><div class="num">${activeDateSet.size}/${daysInPeriod}</div><div class="label">Active days</div></div>
     </div>
+    ${highlightsHtml}
     ${subjectBars}
+    ${typeBars}
+    ${dailyLogSection}
     ${uploadsSection}
+    ${scoresSection}
+    ${noWorkSection}
     ${classSections || '<div class="report-empty">No classes to report on.</div>'}
   `;
 }
